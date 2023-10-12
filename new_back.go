@@ -6,7 +6,6 @@ import (
 	"crypto/cipher"
 	"encoding/base64"
 	"fmt"
-	"io"
 	"net/http"
 )
 
@@ -46,8 +45,11 @@ func submitForm(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("The discord ID is ", formData.Discord)
 	enc_disc, err := GetAESEncrypted(formData.Discord)
 	fmt.Println(enc_disc)
-	w.WriteHeader(http.StatusOK)
-	io.WriteString(w, "Form data received")
+	// w.WriteHeader(http.StatusOK)
+	// io.WriteString(w, "Form data received")
+
+	http.Redirect(w, r, "/otp.html", http.StatusSeeOther)
+
 }
 
 func GetAESDecrypted(encrypted string) ([]byte, error) {
