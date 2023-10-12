@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Form Example</title>
+</head>
+<body>
+    <form action="/submit-form" method="post">
+        <label for="name">Enter your name</label>
+        <input type="text" name="name" placeholder="Name">
+        <br>
+        <label for="email">Enter your email ID</label>
+        <input type="text" name="email" placeholder="Email">
+        <br>
+        <label for="discord">Enter your discord ID</label>
+        <input type="text" name="discord" placeholder="Discord">
+        <br>
+        <label for="phno">Enter your phone number</label>
+        <input type="text" name="phno" placeholder="Phone Number">
+        
+        <input type="checkbox" name="subscribe" value="yes"> Subscribe to newsletter<br>
+        
+        <label for="country">Select a country:</label>
+        <select name="country" id="country">
+            <option value="usa">USA</option>
+            <option value="canada">Canada</option>
+            <option value="uk">UK</option>
+        </select>
+        
+        <label for="gender">Select gender:</label>
+        <input type="radio" name="gender" value="male"> Male
+        <input type="radio" name="gender" value="female"> Female
+        
+        <input type="submit" value="Submit">
+    </form>
+</body>
+</html>

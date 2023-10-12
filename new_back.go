@@ -43,9 +43,9 @@ func submitForm(w http.ResponseWriter, r *http.Request) {
 
 	// Process the form data as needed
 	fmt.Printf("Received data: %+v\n", formData)
-
-	// The rest of your processing code...
-
+	fmt.Println("The discord ID is ", formData.Discord)
+	enc_disc, err := GetAESEncrypted(formData.Discord)
+	fmt.Println(enc_disc)
 	w.WriteHeader(http.StatusOK)
 	io.WriteString(w, "Form data received")
 }
@@ -117,10 +117,22 @@ func GetAESEncrypted(plaintext string) (string, error) {
 	return str, nil
 }
 
-func main() {
-	r := http.NewServeMux()
-	r.HandleFunc("/submit-form", submitForm)
+// func main() {
+// 	r := http.NewServeMux()
+// 	// http.Handle("/", http.FileServer(http.Dir("static")))
+// 	r.HandleFunc("/submit-form", submitForm)
 
-	http.Handle("/", r)
+// 	http.Handle("/", r)
+// 	http.ListenAndServe(":8080", nil)
+// }
+
+func main() {
+	// Serve the HTML file
+	http.Handle("/", http.FileServer(http.Dir("static")))
+
+	// Handle form submissions
+	http.HandleFunc("/submit-form", submitForm)
+
+	fmt.Println("Server is running on :8080...")
 	http.ListenAndServe(":8080", nil)
 }
