@@ -18,8 +18,9 @@ type FormData struct {
 	Discord   string `json:"discord"`
 	Phno      string `json:"phno"`
 	Subscribe string `json:"subscribe"`
-	Country   string `json:"country"`
+	College   string `json:"college"`
 	Gender    string `json:"gender"`
+	Passw     string `json:"passw"`
 }
 
 func submitForm(w http.ResponseWriter, r *http.Request) {
@@ -40,8 +41,9 @@ func submitForm(w http.ResponseWriter, r *http.Request) {
 	formData.Discord = r.FormValue("discord")
 	formData.Phno = r.FormValue("phno")
 	formData.Subscribe = r.FormValue("subscribe")
-	formData.Country = r.FormValue("country")
+	formData.College = r.FormValue("college")
 	formData.Gender = r.FormValue("gender")
+	formData.Passw = r.FormValue("passw")
 
 	// Process the form data as needed
 	fmt.Printf("Received data: %+v\n", formData)
@@ -60,7 +62,7 @@ func submitForm(w http.ResponseWriter, r *http.Request) {
 }
 
 func valFormData(f FormData) bool {
-	if f.Name != "" && f.Discord != "" {
+	if f.Name != "" && f.Discord != "" && f.Email != "" && f.Passw != "" && f.Gender != "" && f.Phno != "" {
 		return true
 	}
 	return false
