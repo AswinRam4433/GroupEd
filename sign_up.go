@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
+	"regexp"
 )
 
 // Full package path
@@ -62,10 +63,25 @@ func submitForm(w http.ResponseWriter, r *http.Request) {
 }
 
 func valFormData(f FormData) bool {
-	if f.Name != "" && f.Discord != "" && f.Email != "" && f.Passw != "" && f.Gender != "" && f.Phno != "" {
+	if f.Name != "" && f.Discord != "" && f.Email != "" && f.Passw != "" && f.Gender != "" && f.Phno != "" && valPassword(f.Passw) {
 		return true
 	}
 	return false
+}
+
+func valPassword(p string) bool {
+	pattern := `(?i)[A-Z]+.*\d+|(?i)\d+.*[A-Z]+`
+	re := regexp.MustCompile(pattern)
+	fmt.Println("The password is ", p)
+
+	if len(p) >= 8 && re.MatchString(p) {
+		fmt.Println("Password passed")
+		return true
+
+	}
+	fmt.Println("Password failed")
+	return false
+
 }
 
 func GetAESDecrypted(encrypted string) ([]byte, error) {
