@@ -1,4 +1,4 @@
-package main
+package main2
 
 import (
 	"bytes"
@@ -17,6 +17,7 @@ type FormData struct {
 	Name    string `json:"name"`
 	Email   string `json:"email"`
 	Discord string `json:"discord"`
+	Phno    string `json:"phone`
 }
 
 func submitForm(w http.ResponseWriter, r *http.Request) {
@@ -31,12 +32,13 @@ func submitForm(w http.ResponseWriter, r *http.Request) {
 	name := formData.Name
 	email := formData.Email
 	discord := formData.Discord
+	phno := formData.Phno
 
 	// You can now use 'name' and 'email' as needed for processing
 	// For example, you can save them to a database or send emails
 
 	w.WriteHeader(http.StatusOK)
-	io.WriteString(w, "Data received: Name = "+name+", Email = "+email+"Discord ID ="+discord)
+	io.WriteString(w, "Data received: Name = "+name+", Email = "+email+"Discord ID ="+discord+"Phone Number= "+phno)
 	dummy, err := GetAESEncrypted(discord)
 	if err != nil {
 		fmt.Println("Error has occurred")

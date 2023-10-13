@@ -1,6 +1,7 @@
 package main
 
 import (
+	// "./new_back.go"
 	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
@@ -8,6 +9,8 @@ import (
 	"fmt"
 	"net/http"
 )
+
+// Full package path
 
 type FormData struct {
 	Name      string `json:"name"`
@@ -49,6 +52,8 @@ func submitForm(w http.ResponseWriter, r *http.Request) {
 	// io.WriteString(w, "Form data received")
 
 	http.Redirect(w, r, "/otp.html", http.StatusSeeOther)
+
+	// sendOtp(string(formData.Phno))
 
 }
 
