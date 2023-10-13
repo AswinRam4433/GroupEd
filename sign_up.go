@@ -56,7 +56,11 @@ func submitForm(w http.ResponseWriter, r *http.Request) {
 	answer := valFormData(formData)
 	print("Result of answer is ", answer)
 
-	http.Redirect(w, r, "/otp.html", http.StatusSeeOther)
+	if answer == true {
+		http.Redirect(w, r, "/otp.html", http.StatusSeeOther)
+
+	} else {
+	}
 
 	// sendOtp(string(formData.Phno))
 
