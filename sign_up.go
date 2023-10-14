@@ -93,6 +93,9 @@ type FormData struct {
 	Gender    string `json:"gender"`
 	Passw     string `json:"passw"`
 }
+type OtpFormData struct {
+	Otp string `json:"otp"`
+}
 
 func submitForm(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -159,8 +162,19 @@ func otpVerificationPage(w http.ResponseWriter, r *http.Request) {
 	// for _, c := range r.Cookies() {
 	// 	fmt.Println(c)
 	// }
+
 	fmt.Println()
 	http.ServeFile(w, r, `static\otp.html`)
+
+	var otpData OtpFormData
+	err1 := r.ParseForm()
+	if err1 != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	otpData.Otp = r.FormValue("otp")
+	fmt.Println(otpData.Otp)
 }
 
 func valFormData(f FormData) bool {
