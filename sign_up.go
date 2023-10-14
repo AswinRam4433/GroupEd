@@ -57,13 +57,30 @@ func submitForm(w http.ResponseWriter, r *http.Request) {
 	print("Result of answer is ", answer)
 
 	if answer == true {
-		http.Redirect(w, r, "/otp.html", http.StatusSeeOther)
+		cookie := http.Cookie{Name: "myCookie", Value: "someValue"}
+		http.SetCookie(w, &cookie)
+
+		// cookie1, err := r.Cookie("myCookie")
+		// if err != nil {
+		// 	// Handle error
+		// 	value := cookie1.Value
+		// 	print(value)
+		// }
+
+		// http.Redirect(w, r, "/otp.html", http.StatusSeeOther)
+		otpVerificationPage(w, r)
 
 	} else {
 	}
 
 	// sendOtp(string(formData.Phno))
 
+}
+
+func otpVerificationPage(w http.ResponseWriter, r *http.Request) {
+	// Serve your OTP verification HTML page here
+	fmt.Println("Triggered otp verification page function")
+	http.ServeFile(w, r, `static\otp.html`)
 }
 
 func valFormData(f FormData) bool {
@@ -170,6 +187,8 @@ func main() {
 
 	// Handle form submissions
 	http.HandleFunc("/submit-form", submitForm)
+
+	http.HandleFunc("/otp-verification", otpVerificationPage)
 
 	fmt.Println("Server is running on :8080...")
 	http.ListenAndServe(":8080", nil)
