@@ -63,10 +63,10 @@ func sendOtp(to string) {
 	}
 }
 
-func checkOtp(to string) {
-	var code string
-	fmt.Println("Please check your phone and enter the code:")
-	fmt.Scanln(&code)
+func checkOtp(to string, code string) bool {
+	// var code string
+	// fmt.Println("Please check your phone and enter the code:")
+	// fmt.Scanln(&code)
 
 	params := &openapi.CreateVerificationCheckParams{}
 	params.SetTo(to)
@@ -76,10 +76,13 @@ func checkOtp(to string) {
 
 	if err != nil {
 		fmt.Println(err.Error())
+		return false
 	} else if *resp.Status == "approved" {
 		fmt.Println("Correct!")
+		return true
 	} else {
 		fmt.Println("Incorrect!")
+		return false
 	}
 }
 
@@ -175,6 +178,9 @@ func otpVerificationPage(w http.ResponseWriter, r *http.Request) {
 
 	otpData.Otp = r.FormValue("otp")
 	fmt.Println(otpData.Otp)
+
+	checkOtp(tokenCookie.Value, otpData.Otp)
+
 }
 
 func valFormData(f FormData) bool {
