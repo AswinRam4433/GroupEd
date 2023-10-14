@@ -60,18 +60,10 @@ func submitForm(w http.ResponseWriter, r *http.Request) {
 	if answer == true {
 		cookie := http.Cookie{Name: "myCookiePhNo", Value: formData.Phno}
 		http.SetCookie(w, &cookie)
-
-		// cookie1, err := r.Cookie("myCookie")
-		// if err != nil {
-		// 	// Handle error
-		// 	value := cookie1.Value
-		// 	print(value)
-		// }
-
-		// http.Redirect(w, r, "/otp.html", http.StatusSeeOther)
-		otpVerificationPage(w, r)
-
+		http.Redirect(w, r, "/otp-verification", http.StatusSeeOther)
 	} else {
+		// Handle the case when 'answer' is false
+		// For example, you could display an error message or redirect to another page
 	}
 
 	// sendOtp(string(formData.Phno))
