@@ -157,10 +157,12 @@ func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		var exams []Exam
 
-		filter := bson.M{"Name": "Udemy Go Lang"}
+		// filter := bson.M{"Name": "Udemy Go Lang"}
 
 		// Find the document with the specified filter
-		cursor, err := collection.Find(context.TODO(), filter)
+		// cursor, err := collection.Find(context.TODO(), filter)
+		cursor, err := collection.Find(context.TODO(), bson.D{})
+
 		if err != nil {
 			log.Fatal(err)
 		}
