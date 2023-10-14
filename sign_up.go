@@ -7,6 +7,7 @@ import (
 	"crypto/cipher"
 	"encoding/base64"
 	"fmt"
+	"log"
 	"net/http"
 	"regexp"
 )
@@ -57,7 +58,7 @@ func submitForm(w http.ResponseWriter, r *http.Request) {
 	print("Result of answer is ", answer)
 
 	if answer == true {
-		cookie := http.Cookie{Name: "myCookie", Value: "someValue"}
+		cookie := http.Cookie{Name: "myCookiePhNo", Value: formData.Phno}
 		http.SetCookie(w, &cookie)
 
 		// cookie1, err := r.Cookie("myCookie")
@@ -79,7 +80,22 @@ func submitForm(w http.ResponseWriter, r *http.Request) {
 
 func otpVerificationPage(w http.ResponseWriter, r *http.Request) {
 	// Serve your OTP verification HTML page here
+
 	fmt.Println("Triggered otp verification page function")
+	fmt.Println("Cookies in API Call:")
+
+	tokenCookie, err := r.Cookie("myCookiePhNo")
+	if err != nil {
+		log.Fatalf("Error occured while reading cookie")
+	}
+	fmt.Println("\nPrinting cookie with name as token")
+	fmt.Println(tokenCookie)
+
+	// fmt.Println("\nPrinting all cookies")
+	// for _, c := range r.Cookies() {
+	// 	fmt.Println(c)
+	// }
+	fmt.Println()
 	http.ServeFile(w, r, `static\otp.html`)
 }
 
