@@ -29,18 +29,22 @@ func main() {
 	fmt.Println("Connected to MongoDB!")
 
 	// Access a collection
-	collection := client.Database("mydb").Collection("mycollection")
+	// collection := client.Database("mydb").Collection("mycollection")
+	collection := client.Database("mydb").Collection("alerts")
 
-	// Insert a document
-	insertResult, err := collection.InsertOne(context.TODO(), bson.M{"name": "John Doe", "age": 30})
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Printf("Inserted document ID: %s\n", insertResult.InsertedID)
+	// // Insert a document
+	// insertResult, err := collection.InsertOne(context.TODO(), bson.M{"name": "John Doe", "age": 30})
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// fmt.Printf("Inserted document ID: %s\n", insertResult.InsertedID)
 
 	// Find a document
 	var result bson.M
-	err = collection.FindOne(context.TODO(), bson.M{"name": "John Doe"}).Decode(&result)
+	// err = collection.FindOne(context.TODO(), bson.M{"name": "John Doe"}).Decode(&result)
+	err = collection.FindOne(context.TODO(), bson.M{"name": "Alice"}).Decode(&result)
+	// _, err1 := collection.Find(context.TODO(), bson.M{})
+
 	if err != nil {
 		log.Fatal(err)
 	}
