@@ -184,10 +184,10 @@ type signInStruct struct {
 }
 
 func signInHandler(w http.ResponseWriter, r *http.Request) {
-	// if r.Method != http.MethodPost {
-	// 	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-	// 	return
-	// }
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
 	fmt.Println("The request method is ", r.Method)
 
 	var formData signInStruct
@@ -204,6 +204,60 @@ func signInHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("Received data: %+v\n", formData)
 	fmt.Println("The discord ID is ", formData.Discord)
 	fmt.Println("The password is ", formData.Passw)
+
+	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
+	client, err := mongo.NewClient(clientOptions)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	err = client.Connect(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer client.Disconnect(ctx)
+
+	// Define the database and collection
+	db := client.Database("mydb")
+	collection := db.Collection("formData")
+	var passwords []string
+
+	// Create a filter to match the Discord ID
+	filter := bson.M{"discord": formData.Discord}
+
+	// Find documents that match the filter
+	cursor, err := collection.Find(ctx, filter)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer cursor.Close(ctx)
+
+	// Iterate through the cursor to extract passwords
+	for cursor.Next(ctx) {
+		var exam Exam
+		if err := cursor.Decode(&exam); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		passwords = append(passwords, exam.Description)
+	}
+
+	// Now, you have the passwords in the 'passwords' slice, and you can compare them as needed.
+
+	// For example, you can loop through 'passwords' and compare each one with formData.Passw.
+	for _, password := range passwords {
+		// decoded_pass, _ := GetAESDecrypted(password)
+		decoded_pass := password
+		if string(decoded_pass) == formData.Passw {
+			fmt.Println("Matching Password")
+		} else {
+			fmt.Println("Not a Matching Password")
+
+		}
+	}
 }
 
 func nextPageSenderHandler(w http.ResponseWriter, r *http.Request) {
@@ -511,23 +565,22 @@ func GetAESDecrypted(encrypted string) ([]byte, error) {
 	iv := "my16digitIvKey12"
 
 	ciphertext, err := base64.StdEncoding.DecodeString(encrypted)
-
 	if err != nil {
 		return nil, err
 	}
 
 	block, err := aes.NewCipher([]byte(key))
-
 	if err != nil {
 		return nil, err
 	}
 
 	if len(ciphertext)%aes.BlockSize != 0 {
-		return nil, fmt.Errorf("block size can't be zero")
+		return nil, fmt.Errorf("ciphertext length is not a multiple of the block size")
 	}
 
 	mode := cipher.NewCBCDecrypter(block, []byte(iv))
 	mode.CryptBlocks(ciphertext, ciphertext)
+
 	ciphertext = PKCS5UnPadding(ciphertext)
 
 	return ciphertext, nil
