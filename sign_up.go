@@ -2,10 +2,11 @@ package main
 
 import (
 	// "./new_back.go"
-	"bytes"
+
 	"context"
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/rand"
 	"encoding/base64"
 	"fmt"
 	"html/template"
@@ -51,7 +52,12 @@ func init() {
 	})
 
 	// fmt.Println((client))
+	// Replace with a strong, randomly generated IV
+
 }
+
+var key = "my32digitkey12345678901234567890" // Replace with a strong, randomly generated key
+var iv = "my16digitIvKey12"
 
 func sendOtp(to string) {
 	fmt.Println("Sending OTP")
@@ -136,12 +142,12 @@ func submitForm(w http.ResponseWriter, r *http.Request) {
 	formData.Gender = r.FormValue("gender")
 	formData.Passw = r.FormValue("passw")
 
-	formData.Passw, _ = GetAESEncrypted(formData.Passw)
+	formData.Passw, _ = GetAESEncrypted(formData.Passw, key, iv)
 
 	// Process the form data as needed
 	fmt.Printf("Received data: %+v\n", formData)
 	fmt.Println("The discord ID is ", formData.Discord)
-	enc_disc, err := GetAESEncrypted(formData.Discord)
+	enc_disc, err := GetAESEncrypted(formData.Discord, key, iv)
 	fmt.Println(enc_disc)
 	// w.WriteHeader(http.StatusOK)
 	// io.WriteString(w, "Form data received")
@@ -182,6 +188,92 @@ type signInStruct struct {
 	Discord string `json:"discord-id"`
 	Passw   string `json:"password"`
 }
+
+// func signInHandler(w http.ResponseWriter, r *http.Request) {
+// 	if r.Method != http.MethodPost {
+// 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+// 		return
+// 	}
+// 	fmt.Println("The request method is ", r.Method)
+
+// 	var formData signInStruct
+// 	err := r.ParseForm()
+// 	if err != nil {
+// 		http.Error(w, err.Error(), http.StatusBadRequest)
+// 		return
+// 	}
+
+// 	formData.Discord = r.FormValue("discord-id")
+// 	formData.Passw = r.FormValue("password")
+
+// 	// Process the form data as needed
+// 	fmt.Printf("Received data: %+v\n", formData)
+// 	fmt.Println("The discord ID is ", formData.Discord)
+// 	fmt.Println("The password is ", formData.Passw)
+
+// 	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
+// 	client, err := mongo.NewClient(clientOptions)
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+
+// 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+// 	defer cancel()
+// 	err = client.Connect(ctx)
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// 	defer client.Disconnect(ctx)
+
+// 	// Define the database and collection
+// 	db := client.Database("mydb")
+// 	collection := db.Collection("formData")
+// 	var passwords []string
+
+// 	// Create a filter to match the Discord ID
+// 	filter := bson.M{"discord": formData.Discord}
+
+// 	// Find documents that match the filter
+// 	cursor, err := collection.Find(ctx, filter)
+// 	if err != nil {
+// 		http.Error(w, err.Error(), http.StatusInternalServerError)
+// 		return
+// 	}
+// 	defer cursor.Close(ctx)
+
+// 	// Iterate through the cursor to extract passwords
+// 	for cursor.Next(ctx) {
+// 		var exam Exam
+// 		if err := cursor.Decode(&exam); err != nil {
+// 			http.Error(w, err.Error(), http.StatusInternalServerError)
+// 			return
+// 		}
+// 		passwords = append(passwords, exam.Description)
+// 	}
+
+// 	// Now, you have the passwords in the 'passwords' slice, and you can compare them as needed.
+
+// 	// For example, you can loop through 'passwords' and compare each one with formData.Passw.
+// 	fmt.Println("about to decode")
+// 	for _, password := range passwords {
+// 		fmt.Println("Password from the DB is ", password, "End of password")
+// 		decoded_pass, dec_err := GetAESDecrypted(password, key, iv)
+// 		if dec_err != nil {
+// 			fmt.Println("error occured")
+
+// 			http.Error(w, err.Error(), http.StatusInternalServerError)
+// 		}
+
+// 		// decoded_pass := password
+// 		fmt.Println("The decoded password is ", string(decoded_pass))
+// 		if string(decoded_pass) == formData.Passw {
+// 			fmt.Println("Matching Password")
+// 		} else {
+// 			fmt.Println("Not a Matching Password")
+
+// 		}
+// 	}
+// }
 
 func signInHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -237,25 +329,31 @@ func signInHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Iterate through the cursor to extract passwords
 	for cursor.Next(ctx) {
-		var exam Exam
+		var exam FormData
 		if err := cursor.Decode(&exam); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		passwords = append(passwords, exam.Description)
+		passwords = append(passwords, exam.Passw)
 	}
 
 	// Now, you have the passwords in the 'passwords' slice, and you can compare them as needed.
 
 	// For example, you can loop through 'passwords' and compare each one with formData.Passw.
+	fmt.Println("about to decode")
 	for _, password := range passwords {
-		// decoded_pass, _ := GetAESDecrypted(password)
-		decoded_pass := password
+		fmt.Println("Password from the DB is ", password, "End of password")
+		decoded_pass, dec_err := GetAESDecrypted(password, key, iv)
+		if dec_err != nil {
+			fmt.Println("error occurred")
+			http.Error(w, dec_err.Error(), http.StatusInternalServerError)
+		}
+
+		fmt.Println("The decoded password is ", string(decoded_pass))
 		if string(decoded_pass) == formData.Passw {
 			fmt.Println("Matching Password")
 		} else {
 			fmt.Println("Not a Matching Password")
-
 		}
 	}
 }
@@ -560,10 +658,77 @@ func valPassword(p string) bool {
 
 }
 
-func GetAESDecrypted(encrypted string) ([]byte, error) {
-	key := "my32digitkey12345678901234567890"
-	iv := "my16digitIvKey12"
+// func GetAESDecrypted(encrypted string) ([]byte, error) {
+// 	key := "my32digitkey12345678901234567890"
+// 	iv := "my16digitIvKey12"
 
+// 	ciphertext, err := base64.StdEncoding.DecodeString(encrypted)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	block, err := aes.NewCipher([]byte(key))
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	if len(ciphertext)%aes.BlockSize != 0 {
+// 		return nil, fmt.Errorf("ciphertext length is not a multiple of the block size")
+// 	}
+
+// 	mode := cipher.NewCBCDecrypter(block, []byte(iv))
+// 	mode.CryptBlocks(ciphertext, ciphertext)
+
+// 	ciphertext = PKCS5UnPadding(ciphertext)
+
+// 	return ciphertext, nil
+// }
+
+// PKCS5UnPadding  pads a certain blob of data with necessary data to be used in AES block cipher
+func PKCS5UnPadding(src []byte) []byte {
+	length := len(src)
+	if length == 0 {
+		return nil // Handle empty slice
+	}
+	unpadding := int(src[length-1])
+	if unpadding > length {
+		return nil // Invalid padding
+	}
+	return src[:(length - unpadding)]
+}
+
+// // GetAESEncrypted encrypts given text in AES 256 CBC
+// func GetAESEncrypted(plaintext string) (string, error) {
+// 	key := "my32digitkey12345678901234567890"
+// 	iv := "my16digitIvKey12"
+
+// 	var plainTextBlock []byte
+// 	length := len(plaintext)
+
+// 	if length%16 != 0 {
+// 		extendBlock := 16 - (length % 16)
+// 		plainTextBlock = make([]byte, length+extendBlock)
+// 		copy(plainTextBlock[length:], bytes.Repeat([]byte{uint8(extendBlock)}, extendBlock))
+// 	} else {
+// 		plainTextBlock = make([]byte, length)
+// 	}
+
+// 	copy(plainTextBlock, plaintext)
+// 	block, err := aes.NewCipher([]byte(key))
+
+// 	if err != nil {
+// 		return "", err
+// 	}
+
+// 	ciphertext := make([]byte, len(plainTextBlock))
+// 	mode := cipher.NewCBCEncrypter(block, []byte(iv))
+// 	mode.CryptBlocks(ciphertext, plainTextBlock)
+
+// 	str := base64.StdEncoding.EncodeToString(ciphertext)
+
+//		return str, nil
+//	}
+func GetAESDecrypted(encrypted string, key string, iv string) ([]byte, error) {
 	ciphertext, err := base64.StdEncoding.DecodeString(encrypted)
 	if err != nil {
 		return nil, err
@@ -586,44 +751,39 @@ func GetAESDecrypted(encrypted string) ([]byte, error) {
 	return ciphertext, nil
 }
 
-// PKCS5UnPadding  pads a certain blob of data with necessary data to be used in AES block cipher
-func PKCS5UnPadding(src []byte) []byte {
-	length := len(src)
-	unpadding := int(src[length-1])
-
-	return src[:(length - unpadding)]
-}
-
 // GetAESEncrypted encrypts given text in AES 256 CBC
-func GetAESEncrypted(plaintext string) (string, error) {
-	key := "my32digitkey12345678901234567890"
-	iv := "my16digitIvKey12"
-
-	var plainTextBlock []byte
-	length := len(plaintext)
-
-	if length%16 != 0 {
-		extendBlock := 16 - (length % 16)
-		plainTextBlock = make([]byte, length+extendBlock)
-		copy(plainTextBlock[length:], bytes.Repeat([]byte{uint8(extendBlock)}, extendBlock))
-	} else {
-		plainTextBlock = make([]byte, length)
-	}
-
-	copy(plainTextBlock, plaintext)
+func GetAESEncrypted(plaintext string, key string, iv string) (string, error) {
 	block, err := aes.NewCipher([]byte(key))
-
 	if err != nil {
 		return "", err
 	}
 
-	ciphertext := make([]byte, len(plainTextBlock))
+	if len(plaintext)%aes.BlockSize != 0 {
+		plainTextBlock := make([]byte, len(plaintext))
+		copy(plainTextBlock, plaintext)
+		// Pad the plaintext to be a multiple of the block size
+		padding := aes.BlockSize - (len(plaintext) % aes.BlockSize)
+		for i := 0; i < padding; i++ {
+			plainTextBlock = append(plainTextBlock, byte(padding))
+		}
+		plaintext = string(plainTextBlock)
+	}
+
+	// Generate a random IV
+	ivBytes := make([]byte, aes.BlockSize)
+	if _, err := rand.Read(ivBytes); err != nil {
+		return "", err
+	}
+
+	iv = base64.StdEncoding.EncodeToString(ivBytes)
+
+	ciphertext := make([]byte, aes.BlockSize+len(plaintext))
+	copy(ciphertext[:aes.BlockSize], []byte(iv))
+
 	mode := cipher.NewCBCEncrypter(block, []byte(iv))
-	mode.CryptBlocks(ciphertext, plainTextBlock)
+	mode.CryptBlocks(ciphertext[aes.BlockSize:], []byte(plaintext))
 
-	str := base64.StdEncoding.EncodeToString(ciphertext)
-
-	return str, nil
+	return base64.StdEncoding.EncodeToString(ciphertext), nil
 }
 
 func main() {
