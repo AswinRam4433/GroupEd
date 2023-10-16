@@ -147,6 +147,23 @@ func submitForm(w http.ResponseWriter, r *http.Request) {
 	print("Result of answer is ", answer)
 
 	if answer == true {
+		clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
+		client, err := mongo.Connect(context.Background(), clientOptions)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer client.Disconnect(context.Background())
+
+		// Access the "mydb" database and the "formData" collection
+		db := client.Database("mydb")
+		collection := db.Collection("formData")
+		_, err = collection.InsertOne(context.Background(), formData)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		fmt.Println("Wrote to MongoDB")
 		cookie := http.Cookie{Name: "myCookiePhNo", Value: formData.Phno}
 		http.SetCookie(w, &cookie)
 		http.Redirect(w, r, "/otp-verification", http.StatusSeeOther)
@@ -566,15 +583,6 @@ func GetAESEncrypted(plaintext string) (string, error) {
 
 	return str, nil
 }
-
-// func main() {
-// 	r := http.NewServeMux()
-// 	// http.Handle("/", http.FileServer(http.Dir("static")))
-// 	r.HandleFunc("/submit-form", submitForm)
-
-// 	http.Handle("/", r)
-// 	http.ListenAndServe(":8080", nil)
-// }
 
 func main() {
 	// Serve the HTML file
