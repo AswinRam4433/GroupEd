@@ -4,10 +4,6 @@ import (
 	// "./new_back.go"
 
 	"context"
-	"crypto/aes"
-	"crypto/cipher"
-	"crypto/rand"
-	"encoding/base64"
 	"fmt"
 	"html/template"
 	"log"
@@ -729,61 +725,65 @@ func PKCS5UnPadding(src []byte) []byte {
 //		return str, nil
 //	}
 func GetAESDecrypted(encrypted string, key string, iv string) ([]byte, error) {
-	ciphertext, err := base64.StdEncoding.DecodeString(encrypted)
-	if err != nil {
-		return nil, err
-	}
+	// ciphertext, err := base64.StdEncoding.DecodeString(encrypted)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	block, err := aes.NewCipher([]byte(key))
-	if err != nil {
-		return nil, err
-	}
+	// block, err := aes.NewCipher([]byte(key))
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	if len(ciphertext)%aes.BlockSize != 0 {
-		return nil, fmt.Errorf("ciphertext length is not a multiple of the block size")
-	}
+	// if len(ciphertext)%aes.BlockSize != 0 {
+	// 	return nil, fmt.Errorf("ciphertext length is not a multiple of the block size")
+	// }
 
-	mode := cipher.NewCBCDecrypter(block, []byte(iv))
-	mode.CryptBlocks(ciphertext, ciphertext)
+	// mode := cipher.NewCBCDecrypter(block, []byte(iv))
+	// mode.CryptBlocks(ciphertext, ciphertext)
 
-	ciphertext = PKCS5UnPadding(ciphertext)
+	// ciphertext = PKCS5UnPadding(ciphertext)
 
-	return ciphertext, nil
+	// return ciphertext, nil
+	b := []byte(encrypted)
+	return b, nil
 }
 
 // GetAESEncrypted encrypts given text in AES 256 CBC
 func GetAESEncrypted(plaintext string, key string, iv string) (string, error) {
-	block, err := aes.NewCipher([]byte(key))
-	if err != nil {
-		return "", err
-	}
+	// block, err := aes.NewCipher([]byte(key))
+	// if err != nil {
+	// 	return "", err
+	// }
 
-	if len(plaintext)%aes.BlockSize != 0 {
-		plainTextBlock := make([]byte, len(plaintext))
-		copy(plainTextBlock, plaintext)
-		// Pad the plaintext to be a multiple of the block size
-		padding := aes.BlockSize - (len(plaintext) % aes.BlockSize)
-		for i := 0; i < padding; i++ {
-			plainTextBlock = append(plainTextBlock, byte(padding))
-		}
-		plaintext = string(plainTextBlock)
-	}
+	// if len(plaintext)%aes.BlockSize != 0 {
+	// 	plainTextBlock := make([]byte, len(plaintext))
+	// 	copy(plainTextBlock, plaintext)
+	// 	// Pad the plaintext to be a multiple of the block size
+	// 	padding := aes.BlockSize - (len(plaintext) % aes.BlockSize)
+	// 	for i := 0; i < padding; i++ {
+	// 		plainTextBlock = append(plainTextBlock, byte(padding))
+	// 	}
+	// 	plaintext = string(plainTextBlock)
+	// }
 
-	// Generate a random IV
-	ivBytes := make([]byte, aes.BlockSize)
-	if _, err := rand.Read(ivBytes); err != nil {
-		return "", err
-	}
+	// // Generate a random IV
+	// ivBytes := make([]byte, aes.BlockSize)
+	// if _, err := rand.Read(ivBytes); err != nil {
+	// 	return "", err
+	// }
 
-	iv = base64.StdEncoding.EncodeToString(ivBytes)
+	// iv = base64.StdEncoding.EncodeToString(ivBytes)
 
-	ciphertext := make([]byte, aes.BlockSize+len(plaintext))
-	copy(ciphertext[:aes.BlockSize], []byte(iv))
+	// ciphertext := make([]byte, aes.BlockSize+len(plaintext))
+	// copy(ciphertext[:aes.BlockSize], []byte(iv))
 
-	mode := cipher.NewCBCEncrypter(block, []byte(iv))
-	mode.CryptBlocks(ciphertext[aes.BlockSize:], []byte(plaintext))
+	// mode := cipher.NewCBCEncrypter(block, []byte(iv))
+	// mode.CryptBlocks(ciphertext[aes.BlockSize:], []byte(plaintext))
 
-	return base64.StdEncoding.EncodeToString(ciphertext), nil
+	// return base64.StdEncoding.EncodeToString(ciphertext), nil
+
+	return plaintext, nil
 }
 
 func main() {
