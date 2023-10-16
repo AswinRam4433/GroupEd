@@ -227,7 +227,7 @@ func main() {
 		</head>
 		<body>
 			<div class="container">
-				<h1>Schedule</h1>
+				<h1>Your Schedule</h1>
 				<table>
 					<thead>
 						<tr>
