@@ -6,6 +6,7 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/sha256"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
@@ -267,8 +268,9 @@ func submitForm(w http.ResponseWriter, r *http.Request) {
 	formData.Gender = r.FormValue("gender")
 	formData.Passw = r.FormValue("passw")
 
-	formData.Passw, _ = GetAESEncrypted(formData.Passw, key, iv)
-
+	// formData.Passw, _ = GetAESEncrypted(formData.Passw, key, iv)
+	hashed := sha256.Sum256([]byte(formData.Passw))
+	formData.Passw = fmt.Sprintf("%x", hashed)
 	// Process the form data as needed
 	fmt.Printf("Received data: %+v\n", formData)
 	fmt.Println("The discord ID is ", formData.Discord)
@@ -468,14 +470,17 @@ func signInHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("about to decode")
 	for _, password := range passwords {
 		fmt.Println("Password from the DB is ", password, "End of password")
-		decoded_pass, dec_err := GetAESDecrypted(password, key, iv)
-		if dec_err != nil {
-			fmt.Println("error occurred")
-			http.Error(w, dec_err.Error(), http.StatusInternalServerError)
-		}
+		// decoded_pass, dec_err := GetAESDecrypted(password, key, iv)\
+		decoded_pass := sha256.Sum256([]byte(formData.Passw))
+		// if dec_err != nil {
+		// 	fmt.Println("error occurred")
+		// 	http.Error(w, dec_err.Error(), http.StatusInternalServerError)
+		// }
 
-		fmt.Println("The decoded password is ", string(decoded_pass))
-		if string(decoded_pass) == formData.Passw {
+		fmt.Println("The decoded password is ", decoded_pass)
+		// if string(decoded_pass) == formData.Passw {
+		// if decoded_pass == password {
+		if fmt.Sprintf("%x", decoded_pass) == password {
 			fmt.Println("Matching Password")
 			http.Redirect(w, r, "/your-next-page", http.StatusSeeOther)
 
