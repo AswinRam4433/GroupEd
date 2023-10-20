@@ -4,8 +4,13 @@ import (
 	// "./new_back.go"
 
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"html/template"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -50,6 +55,130 @@ func init() {
 	// fmt.Println((client))
 	// Replace with a strong, randomly generated IV
 
+}
+
+const privateKeyFile = "private.pem"
+const publicKeyFile = "public.pem"
+
+// GenerateRSAKeyPair generates an RSA key pair and saves them to files.
+func GenerateRSAKeyPair(keySize int) (*rsa.PrivateKey, *rsa.PublicKey, error) {
+	// Check if keys already exist
+	if _, err := os.Stat(privateKeyFile); err == nil {
+		if _, err := os.Stat(publicKeyFile); err == nil {
+			// Keys exist, load and return
+			privateKey, err := LoadPrivateKey(privateKeyFile)
+			if err != nil {
+				return nil, nil, err
+			}
+			publicKey, err := LoadPublicKey(publicKeyFile)
+			if err != nil {
+				return nil, nil, err
+			}
+			return privateKey, publicKey, nil
+		}
+	}
+	fmt.Println("Trying to generate keys")
+	privateKey, err := rsa.GenerateKey(rand.Reader, keySize)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	err = SavePrivateKey(privateKey, privateKeyFile)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	err = SavePublicKey(&privateKey.PublicKey, publicKeyFile)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return privateKey, &privateKey.PublicKey, nil
+}
+
+// SavePrivateKey saves the private key to a file.
+func SavePrivateKey(key *rsa.PrivateKey, filename string) error {
+	privBytes := x509.MarshalPKCS1PrivateKey(key)
+	privBlock := &pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: privBytes,
+	}
+	privFile, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer privFile.Close()
+	return pem.Encode(privFile, privBlock)
+}
+
+// LoadPrivateKey loads the private key from a file.
+func LoadPrivateKey(filename string) (*rsa.PrivateKey, error) {
+	privFile, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer privFile.Close()
+	pemData, err := ioutil.ReadAll(privFile)
+	if err != nil {
+		return nil, err
+	}
+	privBlock, _ := pem.Decode(pemData)
+	return x509.ParsePKCS1PrivateKey(privBlock.Bytes)
+}
+
+// SavePublicKey saves the public key to a file.
+func SavePublicKey(key *rsa.PublicKey, filename string) error {
+	pubBytes, err := x509.MarshalPKIXPublicKey(key)
+	if err != nil {
+		return err
+	}
+	pubBlock := &pem.Block{
+		Type:  "PUBLIC KEY",
+		Bytes: pubBytes,
+	}
+	pubFile, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer pubFile.Close()
+	return pem.Encode(pubFile, pubBlock)
+}
+
+// LoadPublicKey loads the public key from a file.
+func LoadPublicKey(filename string) (*rsa.PublicKey, error) {
+	pubFile, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer pubFile.Close()
+	pemData, err := ioutil.ReadAll(pubFile)
+	if err != nil {
+		return nil, err
+	}
+	pubBlock, _ := pem.Decode(pemData)
+	pubKey, err := x509.ParsePKIXPublicKey(pubBlock.Bytes)
+	if err != nil {
+		return nil, err
+	}
+	return pubKey.(*rsa.PublicKey), nil
+}
+
+// RSAEncrypt encrypts a plaintext using the public key.
+func RSAEncrypt(pubKey *rsa.PublicKey, plaintext []byte) ([]byte, error) {
+	ciphertext, err := rsa.EncryptPKCS1v15(rand.Reader, pubKey, plaintext)
+	if err != nil {
+		return nil, err
+	}
+	return ciphertext, nil
+}
+
+// RSADecrypt decrypts a ciphertext using the private key.
+func RSADecrypt(privKey *rsa.PrivateKey, ciphertext []byte) ([]byte, error) {
+	plaintext, err := rsa.DecryptPKCS1v15(rand.Reader, privKey, ciphertext)
+	if err != nil {
+		return nil, err
+	}
+	return plaintext, nil
 }
 
 var key = "my32digitkey12345678901234567890" // Replace with a strong, randomly generated key
@@ -789,6 +918,28 @@ func GetAESEncrypted(plaintext string, key string, iv string) (string, error) {
 }
 
 func main() {
+	privateKey, publicKey, err := GenerateRSAKeyPair(2048)
+	if err != nil {
+		fmt.Println("Error generating or loading RSA key pair:", err)
+		return
+	}
+
+	message := []byte("ABCDEF")
+	fmt.Println("Original message:", string(message))
+
+	ciphertext, err := RSAEncrypt(publicKey, message)
+	if err != nil {
+		fmt.Println("Encryption error:", err)
+		return
+	}
+	fmt.Println("Encrypted message:", ciphertext)
+
+	decryptedMessage, err := RSADecrypt(privateKey, ciphertext)
+	if err != nil {
+		fmt.Println("Decryption error:", err)
+		return
+	}
+	fmt.Println("Decrypted message:", string(decryptedMessage))
 
 	// http.HandleFunc("/signin", signInHandler)
 	http.HandleFunc("/signin", func(w http.ResponseWriter, r *http.Request) {
