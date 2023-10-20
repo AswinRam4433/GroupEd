@@ -348,6 +348,8 @@ func signInHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("The decoded password is ", string(decoded_pass))
 		if string(decoded_pass) == formData.Passw {
 			fmt.Println("Matching Password")
+			http.Redirect(w, r, "/your-next-page", http.StatusSeeOther)
+
 		} else {
 			fmt.Println("Not a Matching Password")
 		}
@@ -791,6 +793,10 @@ func main() {
 	// http.HandleFunc("/signin", signInHandler)
 	http.HandleFunc("/signin", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "static/sign_in.html")
+	})
+
+	http.HandleFunc("/landing", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "landing.html")
 	})
 
 	// Serve the HTML file
